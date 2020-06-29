@@ -124,8 +124,7 @@ exports.subscribe = function(successCallback, errorCallback, sensor_type){
                 getDescriptors(characteristic);
             }
         }
-        if (!connectedDevice.characteristic)
-               errorCallback();
+        
 
    }
 
@@ -150,7 +149,6 @@ exports.subscribe = function(successCallback, errorCallback, sensor_type){
                 function(errorCode)
                 {
                     console.log('descriptors error: ' + errorCode);
-                    errorCallback();
                 });
 
    }
@@ -170,7 +168,6 @@ exports.subscribe = function(successCallback, errorCallback, sensor_type){
                 function(errorCode)
                 {
                     console.log('readDescriptor error: ' + errorCode);
-                    errorCallback();
                 });
 
    }
