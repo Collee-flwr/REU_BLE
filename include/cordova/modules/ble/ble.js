@@ -42,9 +42,8 @@ var connectedDevice = {};
 
 exports.requiredPlugins = ['cordova-plugin-ble'];
 
-exports.connect = function () {
+exports.connect = function (successCallback, errorCallback) {
     var devices = {};
-
 
     function startScan(fn){
               evothings.ble.startScan(
@@ -57,6 +56,7 @@ exports.connect = function () {
                    function(error)
                    {
                        console.log('BLE scan error: ' + error)
+                       errorCallback();
                    });
     }
 
@@ -72,6 +72,7 @@ exports.connect = function () {
                    },
                    function(errorCode){
                      console.log('Connect error: ' + errorCode);
+                     errorCallback();
              });
     }
 
@@ -90,7 +91,7 @@ exports.connect = function () {
 };
 
 
-exports.subscribe = function(onSuccess){
+exports.subscribe = function(successCallback, errorCallback, sensor_type){
 
    setTimeout(getServices, 2000);
 
@@ -103,6 +104,7 @@ exports.subscribe = function(onSuccess){
                  },
                  function(errorCode){
                     console.log('Services error: ' + errorCode);
+                    errorCallback();
                  });
    }
 
@@ -124,13 +126,12 @@ exports.subscribe = function(onSuccess){
               {
                  var buff = new Uint8Array(data);
                  var cleanedData = buff[0];
-                 onSuccess(cleanedData);
-
+                 successCallback(cleanedData);
               },
               function(errorCode)
               {
                 console.log('enableNotification error: ' + errorCode);
+                errorCallback();
               });
    }
 };
-
