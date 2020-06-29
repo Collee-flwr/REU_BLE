@@ -35,7 +35,6 @@
  */
 
 var deviceName = "MKR1010";
-var distanceService = "19b10000-e8f2-537e-4f6c-d104768a1214";
 
 var connectedDevice = {};
 
@@ -43,24 +42,28 @@ var connectedDevice = {};
 exports.requiredPlugins = ['cordova-plugin-ble'];
 
 exports.connect = function (successCallback, errorCallback) {
+
     var devices = {};
 
     function startScan(fn){
-              evothings.ble.startScan(
-                   function(device)
-                   {
-                       device.timeStamp = Date.now();
-                       devices[device.address] = device;
-                       fn(devices);
-                   },
-                   function(error)
-                   {
-                       console.log('BLE scan error: ' + error)
-                       errorCallback();
-                   });
+
+          evothings.ble.startScan(
+               function(device)
+               {
+                   device.timeStamp = Date.now();
+                   devices[device.address] = device;
+                   fn(devices);
+               },
+               function(error)
+               {
+                   console.log('BLE scan error: ' + error)
+                   errorCallback();
+               });
+
     }
 
     function connect (device){
+
          evothings.ble.connectToDevice(
                    device,
                    function(device){
@@ -74,9 +77,11 @@ exports.connect = function (successCallback, errorCallback) {
                      console.log('Connect error: ' + errorCode);
                      errorCallback();
              });
+
     }
 
     startScan(function(devices){
+
          for (var key in devices)
          {
              var device = devices[key];
@@ -96,6 +101,7 @@ exports.subscribe = function(successCallback, errorCallback, sensor_type){
    setTimeout(getServices, 2000);
 
    function getServices(){
+
         evothings.ble.readAllServiceData(
                  connectedDevice.device,
                  function(services){
@@ -106,32 +112,84 @@ exports.subscribe = function(successCallback, errorCallback, sensor_type){
                     console.log('Services error: ' + errorCode);
                     errorCallback();
                  });
+
    }
 
    function getCharacteristic(){
-        for (var index in connectedDevice.services){
-           var service = connectedDevice.services[index];
-                if (service.uuid == distanceService){
-                   connectedDevice.characteristic = service.characteristics[0];
-                }
+
+        for (var sIndex in connectedDevice.services){
+            var service = connectedDevice.services[sIndex];
+            for (var cIndex in service.characteristics){
+                var characteristic = service.characteristics[cIndex];
+                getDescriptors(characteristic);
+            }
         }
-        getData();
+        if (!connectedDevice.characteristic)
+               errorCallback();
+
+   }
+
+   function getDescriptors(characteristic){
+
+        evothings.ble.descriptors(
+                connectedDevice.device,
+                characteristic,
+                function(descriptors)
+                {
+
+                    for( var i in descriptors){
+                        var descriptor = descriptors[i];
+                        discoverSensor(descriptor,function(){
+                            connectedDevice.characteristic = characteristic;
+                            getData();
+                        });
+                    }
+                    console.log('found descriptors:');
+
+                },
+                function(errorCode)
+                {
+                    console.log('descriptors error: ' + errorCode);
+                    errorCallback();
+                });
+
+   }
+
+   function discoverSensor(descriptor, subscribe){
+
+         evothings.ble.readDescriptor(
+                connectedDevice.device,
+                descriptor,
+                function(data)
+                {
+                    var cleanedData = String.fromCharCode.apply(null, new Uint8Array(data));
+                    if (cleanedData == sensor_type){
+                            subscribe();
+                    }
+                },
+                function(errorCode)
+                {
+                    console.log('readDescriptor error: ' + errorCode);
+                    errorCallback();
+                });
+
    }
 
    function getData(){
+
         evothings.ble.enableNotification(
-              connectedDevice.device,
-              connectedDevice.characteristic,
-              function(data)
-              {
-                 var buff = new Uint8Array(data);
-                 var cleanedData = buff[0];
-                 successCallback(cleanedData);
-              },
-              function(errorCode)
-              {
-                console.log('enableNotification error: ' + errorCode);
-                errorCallback();
-              });
+                connectedDevice.device,
+                connectedDevice.characteristic,
+                function(data)
+                {
+                     var buff = new Uint8Array(data);
+                     var cleanedData = buff[0];
+                     successCallback(cleanedData);
+                },
+                function(errorCode)
+                {
+                    console.log('enableNotification error: ' + errorCode);
+                    errorCallback();
+                });
    }
 };
