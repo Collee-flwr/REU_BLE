@@ -37,6 +37,3 @@ exports.initialize = function() {
     });
 
 };
-
-
-
