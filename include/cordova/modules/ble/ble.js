@@ -89,6 +89,7 @@ exports.connect = function (successCallback, errorCallback) {
                    if (name == deviceName){
                         evothings.ble.stopScan();
                         connect(device);
+
                     }
          }
     });
@@ -98,7 +99,12 @@ exports.connect = function (successCallback, errorCallback) {
 
 exports.subscribe = function(successCallback, errorCallback, sensor_type){
 
-   setTimeout(getServices, 2000);
+    var timer = setInterval(function(){
+                if(connectedDevice.device != null){
+                    clearInterval(timer);
+                    setTimeout(getServices, 2000);
+                    }}, 500);
+
 
    function getServices(){
 
@@ -124,7 +130,6 @@ exports.subscribe = function(successCallback, errorCallback, sensor_type){
                 getDescriptors(characteristic);
             }
         }
-        
 
    }
 
@@ -188,5 +193,7 @@ exports.subscribe = function(successCallback, errorCallback, sensor_type){
                     console.log('enableNotification error: ' + errorCode);
                     errorCallback();
                 });
+
    }
+   
 };
