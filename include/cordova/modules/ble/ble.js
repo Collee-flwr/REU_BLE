@@ -34,7 +34,6 @@
  * @version $$Id:
  */
 
-var deviceName = "MKR1010";
 
 var connectedDevice = {};
 
@@ -44,6 +43,7 @@ exports.requiredPlugins = ['cordova-plugin-ble'];
 exports.connect = function (successCallback, errorCallback) {
 
     var devices = {};
+    var processed = [];
 
     function startScan(fn){
 
@@ -62,12 +62,43 @@ exports.connect = function (successCallback, errorCallback) {
 
     }
 
+
+    function displayDevices(devices){
+
+
+            for (var key in devices)
+            {
+                var device = devices[key];
+                var name = device.name || 'no name';
+
+                if(name != 'no name' && !(processed.includes(name))){
+                    processed.push(name);
+                    var button = document.createElement("button");
+                    button.innerHTML = name;
+                    button.setAttribute('id', device.address);
+                    button.style.padding = '8px';
+//                    button.style.width = '40%';
+                    button.setAttribute( 'class', "btn btn-outline-dark btn-block");
+                    button.onclick = function(d){
+                        evothings.ble.stopScan();
+                        document.querySelector('#found-devices').innerHTML = '';
+                        document.querySelector('#message').innerHTML = 'Connecting to device: ' + devices[d.target.id].name;
+                        connect(devices[d.target.id]);
+
+                    };
+                    document.querySelector('#found-devices').appendChild(button);
+                    document.querySelector('#found-devices').appendChild(document.createElement('br'));
+                }
+            }
+
+    }
+
     function connect (device){
 
          evothings.ble.connectToDevice(
                    device,
                    function(device){
-                     document.querySelector('#found-devices').innerHTML = 'Connected to device: ' + device.name;
+                     document.querySelector('#message').innerHTML = 'Connected to device: ' + device.name;
                      connectedDevice.device = device;
                    },
                    function(device){
@@ -82,16 +113,8 @@ exports.connect = function (successCallback, errorCallback) {
 
     startScan(function(devices){
 
-         for (var key in devices)
-         {
-             var device = devices[key];
-             var name = device.name || 'no name';
-                   if (name == deviceName){
-                        evothings.ble.stopScan();
-                        connect(device);
+         displayDevices(devices);
 
-                    }
-         }
     });
 
 };
@@ -195,5 +218,5 @@ exports.subscribe = function(successCallback, errorCallback, sensor_type){
                 });
 
    }
-   
+
 };
