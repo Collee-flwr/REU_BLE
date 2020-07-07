@@ -10,6 +10,9 @@ exports.initialize = function() {
 
 function display(){
     var res = this.get('dataIn');
-    document.querySelector('#found-devices').innerHTML = "Distance: " + res + " cm";
+    document.getElementById("data-container").style.display = "flex";
+    document.querySelector('#data').innerHTML =  res;
+    document.querySelector('#cm').innerHTML =  "cm";
+
 
 }
